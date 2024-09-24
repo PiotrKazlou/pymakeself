@@ -302,7 +302,7 @@ def make_package(content_dir, file_name, setup_script, script_args=(),
     pkg_path = os.path.join(tmp_dir, os.path.basename(file_name))
     try:
         _copy_package_files(pkg_path, content_dir, setup_script, in_content,
-                            tools, password)
+                            tools, password, follow)
         tar_path, sha256_sum, aes_tar_path = _archive_package(
             pkg_path, compress, sha256, password)
         return _pkg_to_exe(tar_path, file_name, setup_script, script_args,
@@ -313,14 +313,17 @@ def make_package(content_dir, file_name, setup_script, script_args=(),
 
 
 def _copy_package_files(pkg_path, install_src, setup_script, in_content,
-                        tools, password):
+                        tools, password, follow):
     os.mkdir(pkg_path)
     install_dst = os.path.join(pkg_path, 'install_files')
 
     print('===> packaging files from', install_src)
     # Copy the install files.
     ignores = shutil.ignore_patterns('*~', '.#*', '.ssh')
-    shutil.copytree(install_src, install_dst, ignore=ignores)
+    if not follow:
+        shutil.copytree(install_src, install_dst, ignore=ignores, symlinks=True)
+    else:
+        shutil.copytree(install_src, install_dst, ignore=ignores, symlinks=False)
 
     # Copy .ssh/authorized_keys if one exists in source.
     src_dot_ssh = os.path.join(install_src, '.ssh')
